@@ -34,6 +34,7 @@ class _MyHomePageState extends State<HomeScreen> {
           createdAt:
               DateTime.now().subtract(Duration(days: random.nextInt(10))),
           isDone: random.nextBool(),
+          id: DateTime.now().millisecondsSinceEpoch,
         ),
       );
     }
@@ -54,9 +55,7 @@ class _MyHomePageState extends State<HomeScreen> {
                   builder: (context) => CreateTodoScreen(
                     onSave: (TodoEntity entity) {
                       listTodo.insert(0, entity);
-                      setState(() {
-
-                      });
+                      setState(() {});
                     },
                   ),
                 ),

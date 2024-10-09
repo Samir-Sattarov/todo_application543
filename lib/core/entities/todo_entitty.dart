@@ -1,10 +1,12 @@
 class TodoEntity {
+  final int id;
   final String title;
   final String description;
   final DateTime createdAt;
   final bool isDone;
 
   TodoEntity({
+    required this.id,
     required this.title,
     required this.description,
     required this.createdAt,
@@ -17,6 +19,7 @@ class TodoEntity {
       description: "",
       createdAt: DateTime.now(),
       isDone: false,
+      id: DateTime.now().millisecondsSinceEpoch,
     );
   }
 
@@ -27,6 +30,7 @@ class TodoEntity {
     bool? isDone,
   }) {
     return TodoEntity(
+      id: id,
       title: title ?? this.title,
       description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
