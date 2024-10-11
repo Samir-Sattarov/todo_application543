@@ -7,19 +7,35 @@ import 'package:todo_application/widgets/text_form_field_widget.dart';
 import '../core/entities/todo_entitty.dart';
 import '../core/utils/app_colors.dart';
 
-class CreateTodoScreen extends StatefulWidget {
+class EditTodoScreen extends StatefulWidget {
+  final TodoEntity? entity;
   final Function(TodoEntity entity) onSave;
-  const CreateTodoScreen({super.key, required this.onSave});
+  const EditTodoScreen({super.key, required this.onSave,   this.entity});
 
   @override
-  State<CreateTodoScreen> createState() => _CreateTodoScreenState();
+  State<EditTodoScreen> createState() => _EditTodoScreenState();
 }
 
-class _CreateTodoScreenState extends State<CreateTodoScreen> {
+class _EditTodoScreenState extends State<EditTodoScreen> {
   final TextEditingController controllerTitle = TextEditingController();
   final TextEditingController controllerDescription = TextEditingController();
 
   TodoEntity entity = TodoEntity.empty();
+
+  @override
+  void initState() {
+    initialize();
+    super.initState();
+  }
+
+  initialize() {
+    if(widget.entity ==null) return;
+
+    controllerTitle.text = widget.entity!.title;
+    controllerDescription.text = widget.entity!.description;
+
+    entity = widget.entity!;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +44,6 @@ class _CreateTodoScreenState extends State<CreateTodoScreen> {
         appBar: AppBar(
           backgroundColor: AppColors.accent,
           title: Text("Create Todo"),
-
         ),
         body: SafeArea(
           child: Padding(

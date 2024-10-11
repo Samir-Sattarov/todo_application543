@@ -2,11 +2,14 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hive/hive.dart';
 import 'package:todo_application/core/utils/app_colors.dart';
-import 'package:todo_application/screens/create_todo_screen.dart';
+import 'package:todo_application/core/utils/storage_service.dart';
 import 'package:todo_application/widgets/todo_card_widget.dart';
 
 import '../core/entities/todo_entitty.dart';
+import '../locator.dart';
+import 'edit_todo_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,8 +23,21 @@ class _MyHomePageState extends State<HomeScreen> {
 
   @override
   void initState() {
+    initialize();
     _generateSampleTodos();
     super.initState();
+  }
+
+  initialize() async {
+    await locator<StorageService>().put("testbox", key: "test", value: "TEST1");
+
+    await Future.delayed(
+      Duration(seconds: 5),
+      () async {
+        final data = await locator<StorageService>().get("testbox", "test");
+        print(data);
+      },
+    );
   }
 
   void _generateSampleTodos() {
@@ -52,7 +68,7 @@ class _MyHomePageState extends State<HomeScreen> {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => CreateTodoScreen(
+                  builder: (context) => EditTodoScreen(
                     onSave: (TodoEntity entity) {
                       listTodo.insert(0, entity);
                       setState(() {});
@@ -71,7 +87,24 @@ class _MyHomePageState extends State<HomeScreen> {
           separatorBuilder: (context, index) => SizedBox(height: 15.h),
           itemBuilder: (context, index) {
             final todo = listTodo[index];
-            return TodoCardWidget(entity: todo);
+            return GestureDetector(
+              child: TodoCardWidget(entity: todo),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditTodoScreen(
+                      onSave: (TodoEntity editedTodo) {
+                        listTodo.insert(0, editedTodo);
+
+                        setState(() {});
+                      },
+                      entity: todo,
+                    ),
+                  ),
+                );
+              },
+            );
           },
         ),
       ),
