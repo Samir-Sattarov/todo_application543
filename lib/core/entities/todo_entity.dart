@@ -37,4 +37,25 @@ class TodoEntity {
       isDone: isDone ?? this.isDone,
     );
   }
+
+  factory TodoEntity.fromJson(Map<String, dynamic> json) {
+    return TodoEntity(
+      id: json['id'],
+      title: json['title'],
+      description: json['description'],
+      createdAt: DateTime.parse(json['createdAt']),
+      isDone: json['isDone'],
+    );
+  }
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {};
+
+    data['id'] = id;
+    data['title'] = title;
+    data['description'] = description;
+    data['createdAt'] = createdAt.toIso8601String();
+    data['isDone'] = isDone;
+
+    return data;
+  }
 }

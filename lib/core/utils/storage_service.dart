@@ -11,10 +11,30 @@ abstract class StorageService {
     required String value,
   });
 
+  Future<void> add(
+    String boxName, {
+    required dynamic value,
+  });
+
+
+
+
+
+  Future<void> edit(
+      String boxName, {
+        required dynamic value,
+      });
+
   Future<void> deleteFromDisk(String boxName);
+
+  Future<List<dynamic>> getDataFromBox(String boxName);
 }
 
 class StorageServiceImpl extends StorageService {
+  StorageServiceImpl() {
+    print("Hello");
+  }
+
   Future<Box> _initBox(String boxName) async {
     final box = await Hive.openBox(boxName);
 
@@ -52,6 +72,36 @@ class StorageServiceImpl extends StorageService {
   Future<void> deleteFromDisk(String boxName) async {
     final box = await _initBox(boxName);
 
-    box.deleteFromDisk();
+    await box.deleteFromDisk();
+  }
+
+  @override
+  Future<void> add(String boxName, {required value}) async {
+    final box = await _initBox(boxName);
+
+    log("Add data to box $boxName,\nvalue: $value");
+
+    await box.put(value['id'].toString(), value);
+  }
+
+  @override
+  Future<List> getDataFromBox(String boxName) async {
+    final box = await _initBox(boxName);
+
+    final listData = box.values.toList();
+
+    log(box.keys.toList().toString(), name: "All keys from box $boxName");
+    print( "All keys from box $boxName ${box.keys.toList()}");
+
+    return listData;
+  }
+
+  @override
+  Future<void> edit(String boxName, {required value})async  {
+    final box = await _initBox(boxName);
+
+    log("Add data to box $boxName,\nvalue: $value");
+
+    await box.put(value['id'].toString(), value);
   }
 }

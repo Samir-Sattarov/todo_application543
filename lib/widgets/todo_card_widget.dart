@@ -3,11 +3,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_application/core/utils/app_colors.dart';
 
-import '../core/entities/todo_entitty.dart';
+import '../core/entities/todo_entity.dart';
 
 class TodoCardWidget extends StatelessWidget {
   final TodoEntity entity;
-  const TodoCardWidget({super.key, required this.entity});
+
+  final Function() onDelete;
+  const TodoCardWidget(
+      {super.key, required this.entity, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +26,15 @@ class TodoCardWidget extends StatelessWidget {
         children: [
           Row(
             children: [
+              IconButton(
+                onPressed: onDelete,
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                icon: Icon(
+                  Icons.delete_forever,
+                  color: Colors.white,
+                ),
+              ),
               FittedBox(
                 child: Text(
                   entity.title,
