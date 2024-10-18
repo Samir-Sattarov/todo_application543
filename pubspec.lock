@@ -78,6 +78,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_confetti:
+    dependency: "direct main"
+    description:
+      name: flutter_confetti
+      sha256: "4e5981442675bc42825753efc0a197c524fd099adb699bff95400f4dc1e53cd0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.3"
   flutter_keyboard_visibility:
     dependency: "direct main"
     description:

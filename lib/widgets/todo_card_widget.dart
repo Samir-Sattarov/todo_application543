@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_confetti/flutter_confetti.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_application/core/utils/app_colors.dart';
@@ -74,6 +75,17 @@ class _TodoCardWidgetState extends State<TodoCardWidget> {
 
                   isDone = value;
                   final todoEntity = widget.entity.copyWith(isDone: isDone);
+
+
+                    Confetti.launch(
+                    context,
+                    options:   ConfettiOptions(
+                      particleCount: 100,
+                      spread: 100,
+                      y: 0.6,
+                      colors: isDone ? [Colors.green, Colors.green] : [Colors.purple,Colors.purple],
+                    ),
+                  );
 
                   widget.onDone.call(todoEntity);
 
