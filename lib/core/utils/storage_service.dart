@@ -16,14 +16,10 @@ abstract class StorageService {
     required dynamic value,
   });
 
-
-
-
-
   Future<void> edit(
-      String boxName, {
-        required dynamic value,
-      });
+    String boxName, {
+    required dynamic value,
+  });
 
   Future<void> deleteFromDisk(String boxName);
 
@@ -91,17 +87,13 @@ class StorageServiceImpl extends StorageService {
     final listData = box.values.toList();
 
     log(box.keys.toList().toString(), name: "All keys from box $boxName");
-    print( "All keys from box $boxName ${box.keys.toList()}");
+    print("All keys from box $boxName ${box.keys.toList()}");
 
     return listData;
   }
 
   @override
-  Future<void> edit(String boxName, {required value})async  {
-    final box = await _initBox(boxName);
-
-    log("Add data to box $boxName,\nvalue: $value");
-
-    await box.put(value['id'].toString(), value);
+  Future<void> edit(String boxName, {required value}) async {
+    await put(boxName, key: value['id'].toString(), value: value);
   }
 }

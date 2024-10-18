@@ -8,21 +8,20 @@ import 'package:todo_application/core/entities/todo_results_entity.dart';
 import 'package:todo_application/core/utils/app_colors.dart';
 import 'package:todo_application/core/utils/storage_keys.dart';
 import 'package:todo_application/core/utils/storage_service.dart';
-import 'package:todo_application/screens/completed_todo_screen.dart';
 import 'package:todo_application/widgets/todo_card_widget.dart';
 
 import '../core/entities/todo_entity.dart';
 import '../locator.dart';
 import 'edit_todo_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class CompletedTodoScreen extends StatefulWidget {
+  const CompletedTodoScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _MyHomePageState();
+  State<CompletedTodoScreen> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<HomeScreen> {
+class _MyHomePageState extends State<CompletedTodoScreen> {
   late List<TodoEntity> listTodo = [];
   late StorageService storageService;
 
@@ -39,7 +38,8 @@ class _MyHomePageState extends State<HomeScreen> {
   }
 
   load() async {
-    final response = await storageService.getDataFromBox(StorageKeys.kTodoList);
+    final response =
+        await storageService.getDataFromBox(StorageKeys.kCompletedTodoList);
 
     final results = TodoResultsEntity.fromJson(List.from(response));
 
@@ -49,23 +49,10 @@ class _MyHomePageState extends State<HomeScreen> {
 
   onDelete(TodoEntity entity) async {
     await storageService.delete(
-      StorageKeys.kTodoList,
+      StorageKeys.kCompletedTodoList,
       entity.id.toString(),
     );
     listTodo.remove(entity);
-    setState(() {});
-  }
-
-  onDone(TodoEntity entity) async {
-    await storageService.add(
-      StorageKeys.kCompletedTodoList,
-      value: entity.toJson(),
-    );
-    listTodo.removeWhere((element) => element.id == entity.id);
-    await storageService.delete(
-      StorageKeys.kTodoList,
-      entity.id.toString(),
-    );
     setState(() {});
   }
 
@@ -73,44 +60,13 @@ class _MyHomePageState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.accent,
-        title: Text("TODO APP 543"),
+        backgroundColor: AppColors.accentTwo,
+        title: Text("Completed TODO"),
         actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => EditTodoScreen(
-                    onSave: (TodoEntity entity) async {
-                      listTodo.insert(0, entity);
-
-                      await storageService.add(
-                        StorageKeys.kTodoList,
-                        value: entity.toJson(),
-                      );
-                      setState(() {});
-                    },
-                  ),
-                ),
-              );
-            },
-          ),
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: () async {
               await load();
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.check_box),
-            onPressed: () async {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CompletedTodoScreen(),
-                ),
-              );
             },
           )
         ],
@@ -141,28 +97,10 @@ class _MyHomePageState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              child: GestureDetector(
-                child: TodoCardWidget(
-                  entity: todo,
-                  onDone: (todoEntity) => onDone(todoEntity),
-                  onDelete: () => onDelete(todo),
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EditTodoScreen(
-                        onSave: (TodoEntity editedTodo) async {
-                          await storageService.edit(
-                            StorageKeys.kTodoList,
-                            value: editedTodo.toJson(),
-                          );
-                          await load();
-                        },
-                        entity: todo,
-                      ),
-                    ),
-                  );
+              child: TodoCardWidget(
+                entity: todo,
+                onDelete: () async {
+                  onDelete(todo);
                 },
               ),
             );

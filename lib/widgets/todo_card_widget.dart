@@ -5,12 +5,27 @@ import 'package:todo_application/core/utils/app_colors.dart';
 
 import '../core/entities/todo_entity.dart';
 
-class TodoCardWidget extends StatelessWidget {
+class TodoCardWidget extends StatefulWidget {
   final TodoEntity entity;
 
   final Function() onDelete;
+
+  final Function(TodoEntity entity)? onDone;
   const TodoCardWidget(
-      {super.key, required this.entity, required this.onDelete});
+      {super.key, required this.entity, required this.onDelete, this.onDone});
+
+  @override
+  State<TodoCardWidget> createState() => _TodoCardWidgetState();
+}
+
+class _TodoCardWidgetState extends State<TodoCardWidget> {
+  bool isDone = false;
+
+  @override
+  void initState() {
+    isDone = widget.entity.isDone;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +42,7 @@ class TodoCardWidget extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                onPressed: onDelete,
+                onPressed: widget.onDelete,
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
                 icon: Icon(
@@ -37,7 +52,7 @@ class TodoCardWidget extends StatelessWidget {
               ),
               FittedBox(
                 child: Text(
-                  entity.title,
+                  widget.entity.title,
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
@@ -48,14 +63,19 @@ class TodoCardWidget extends StatelessWidget {
               SizedBox(width: 10.w),
               Spacer(),
               Checkbox(
-                value: entity.isDone,
-                onChanged: null,
+                value: isDone,
+                onChanged: (value) {
+                  isDone = true;
+                  final todoEntity = widget.entity.copyWith(isDone: true);
+                  widget.onDone?.call(todoEntity);
+                  setState(() {});
+                },
               ),
             ],
           ),
           SizedBox(height: 3.h),
           Text(
-            entity.description,
+            widget.entity.description,
             style: TextStyle(
               color: Colors.white60,
               fontWeight: FontWeight.w400,
@@ -66,7 +86,7 @@ class TodoCardWidget extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              DateFormat('dd/MM/yyyy').format(entity.createdAt),
+              DateFormat('dd/MM/yyyy').format(widget.entity.createdAt),
               style: TextStyle(
                 color: Colors.white60,
                 fontWeight: FontWeight.w400,
