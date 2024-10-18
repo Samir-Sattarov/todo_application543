@@ -1,9 +1,7 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:hive/hive.dart';
 import 'package:lottie/lottie.dart';
 import 'package:todo_application/core/entities/todo_results_entity.dart';
 import 'package:todo_application/core/utils/app_colors.dart';
@@ -14,7 +12,6 @@ import 'package:todo_application/widgets/todo_card_widget.dart';
 import '../core/entities/todo_entity.dart';
 import '../core/utils/assets.dart';
 import '../locator.dart';
-import 'edit_todo_screen.dart';
 
 class CompletedTodoScreen extends StatefulWidget {
   const CompletedTodoScreen({super.key});

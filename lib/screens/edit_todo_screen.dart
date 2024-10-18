@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:todo_application/core/utils/storage_service.dart';
 import 'package:todo_application/widgets/button_widget.dart';
 import 'package:todo_application/widgets/text_form_field_widget.dart';
 
 import '../core/entities/todo_entity.dart';
 import '../core/utils/app_colors.dart';
-import '../locator.dart';
 
 class EditTodoScreen extends StatefulWidget {
   final TodoEntity? entity;
