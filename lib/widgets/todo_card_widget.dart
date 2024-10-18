@@ -10,9 +10,14 @@ class TodoCardWidget extends StatefulWidget {
 
   final Function() onDelete;
 
-  final Function(TodoEntity entity)? onDone;
-  const TodoCardWidget(
-      {super.key, required this.entity, required this.onDelete, this.onDone});
+  final Function(TodoEntity entity) onDone;
+
+  const TodoCardWidget({
+    super.key,
+    required this.entity,
+    required this.onDelete,
+    required this.onDone,
+  });
 
   @override
   State<TodoCardWidget> createState() => _TodoCardWidgetState();
@@ -65,9 +70,13 @@ class _TodoCardWidgetState extends State<TodoCardWidget> {
               Checkbox(
                 value: isDone,
                 onChanged: (value) {
-                  isDone = true;
-                  final todoEntity = widget.entity.copyWith(isDone: true);
-                  widget.onDone?.call(todoEntity);
+                  if (value == null) return;
+
+                  isDone = value;
+                  final todoEntity = widget.entity.copyWith(isDone: isDone);
+
+                  widget.onDone.call(todoEntity);
+
                   setState(() {});
                 },
               ),

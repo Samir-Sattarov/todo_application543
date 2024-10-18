@@ -56,6 +56,19 @@ class _MyHomePageState extends State<CompletedTodoScreen> {
     setState(() {});
   }
 
+  onDone(TodoEntity entity) async {
+    await storageService.add(
+      StorageKeys.kTodoList,
+      value: entity.toJson(),
+    );
+    listTodo.removeWhere((element) => element.id == entity.id);
+    await storageService.delete(
+      StorageKeys.kCompletedTodoList,
+      entity.id.toString(),
+    );
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,6 +112,7 @@ class _MyHomePageState extends State<CompletedTodoScreen> {
               ),
               child: TodoCardWidget(
                 entity: todo,
+                onDone: (todoEntity) => onDone(todoEntity),
                 onDelete: () async {
                   onDelete(todo);
                 },
