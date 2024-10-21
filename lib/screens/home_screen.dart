@@ -10,6 +10,7 @@ import 'package:todo_application/core/utils/storage_keys.dart';
 import 'package:todo_application/core/utils/storage_service.dart';
 import 'package:todo_application/core/utils/use_debounce.dart';
 import 'package:todo_application/screens/completed_todo_screen.dart';
+import 'package:todo_application/screens/settings_screen.dart';
 import 'package:todo_application/widgets/text_form_field_widget.dart';
 import 'package:todo_application/widgets/todo_card_widget.dart';
 
@@ -105,7 +106,6 @@ class _MyHomePageState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark =  true;
     return KeyboardDismissOnTap(
       child: Scaffold(
         appBar: AppBar(
@@ -136,6 +136,17 @@ class _MyHomePageState extends State<HomeScreen> {
               icon: Icon(Icons.refresh),
               onPressed: () async {
                 await load();
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.settings_sharp),
+              onPressed: () async {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SettingsScreen(),
+                  ),
+                );
               },
             ),
             IconButton(

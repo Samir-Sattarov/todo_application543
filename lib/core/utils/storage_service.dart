@@ -8,7 +8,7 @@ abstract class StorageService {
   Future<void> put(
     String boxName, {
     required String key,
-    required String value,
+    required dynamic value,
   });
 
   Future<void> add(
@@ -51,10 +51,10 @@ class StorageServiceImpl extends StorageService {
   put(
     String boxName, {
     required String key,
-    required String value,
+    required dynamic value,
   }) async {
     final box = await _initBox(boxName);
-
+    log("Put data to $boxName key: $key, value: $value");
     await box.put(key, value);
   }
 
@@ -96,5 +96,4 @@ class StorageServiceImpl extends StorageService {
   Future<void> edit(String boxName, {required value}) async {
     await put(boxName, key: value['id'].toString(), value: value);
   }
-
 }
