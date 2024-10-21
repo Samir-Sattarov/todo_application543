@@ -23,7 +23,7 @@ abstract class StorageService {
 
   Future<void> deleteFromDisk(String boxName);
 
-  Future<List<dynamic>> getDataFromBox(String boxName);
+  Future<List<dynamic>> getDataFromBox(String boxName, {int? count = 10});
 }
 
 class StorageServiceImpl extends StorageService {
@@ -81,7 +81,7 @@ class StorageServiceImpl extends StorageService {
   }
 
   @override
-  Future<List> getDataFromBox(String boxName) async {
+  Future<List> getDataFromBox(String boxName, {int? count = 10}) async {
     final box = await _initBox(boxName);
 
     final listData = box.values.toList();
@@ -96,4 +96,5 @@ class StorageServiceImpl extends StorageService {
   Future<void> edit(String boxName, {required value}) async {
     await put(boxName, key: value['id'].toString(), value: value);
   }
+
 }
