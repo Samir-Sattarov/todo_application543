@@ -3,19 +3,16 @@ import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:lottie/lottie.dart';
-import 'package:todo_application/core/entities/todo_results_entity.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_application/core/providers/todo_provider.dart';
 import 'package:todo_application/core/utils/app_colors.dart';
 import 'package:todo_application/core/utils/assets.dart';
 import 'package:todo_application/core/utils/storage_keys.dart';
-import 'package:todo_application/core/utils/storage_service.dart';
-import 'package:todo_application/core/utils/use_debounce.dart';
 import 'package:todo_application/screens/completed_todo_screen.dart';
-import 'package:todo_application/screens/settings_screen.dart';
 import 'package:todo_application/widgets/text_form_field_widget.dart';
 import 'package:todo_application/widgets/todo_card_widget.dart';
 
 import '../core/entities/todo_entity.dart';
-import '../locator.dart';
 import 'edit_todo_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -26,86 +23,23 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<HomeScreen> {
-  late List<TodoEntity> listTodo = [];
-  late StorageService storageService;
-  late UseDebounce useDebounce;
   final TextEditingController controllerSearch = TextEditingController();
+  final String boxKey = StorageKeys.kTodoList;
 
   @override
   void initState() {
-    initialize();
+    load();
     super.initState();
   }
 
-  @override
-  void dispose() {
-    useDebounce.dispose();
-    super.dispose();
-  }
-
-  initialize() async {
-    useDebounce = UseDebounce(milliseconds: 500);
-    storageService = locator();
-
-    await load();
-  }
-
-  load() async {
-    final response =
-        await storageService.getDataFromBox(StorageKeys.kTodoList, count: 10);
-
-    final results = TodoResultsEntity.fromJson(List.from(response));
-
-    listTodo = results.listTodo;
-    setState(() {});
-  }
-
-  search(String text) async {
-    if (text.isEmpty) {
-      load();
-      return;
-    }
-
-    useDebounce.run(
-      () async {
-        final response =
-            await storageService.getDataFromBox(StorageKeys.kTodoList);
-
-        final results = TodoResultsEntity.fromJson(List.from(response));
-
-        final formattedData = results.listTodo
-            .where((element) => element.title.contains(text))
-            .toList();
-        listTodo = formattedData;
-        setState(() {});
-      },
-    );
-  }
-
-  onDelete(TodoEntity entity) async {
-    await storageService.delete(
-      StorageKeys.kTodoList,
-      entity.id.toString(),
-    );
-    listTodo.remove(entity);
-    setState(() {});
-  }
-
-  onDone(TodoEntity entity) async {
-    await storageService.add(
-      StorageKeys.kCompletedTodoList,
-      value: entity.toJson(),
-    );
-    listTodo.removeWhere((element) => element.id == entity.id);
-    await storageService.delete(
-      StorageKeys.kTodoList,
-      entity.id.toString(),
-    );
-    setState(() {});
+  load() {
+    context.read<TodoProvider>().load(boxKey);
   }
 
   @override
   Widget build(BuildContext context) {
+    final todoProvider = context.read<TodoProvider>();
+    final listTodo  = context.watch<TodoProvider>().listTodo;
     return KeyboardDismissOnTap(
       child: Scaffold(
         appBar: AppBar(
@@ -118,14 +52,8 @@ class _MyHomePageState extends State<HomeScreen> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => EditTodoScreen(
-                      onSave: (TodoEntity entity) async {
-                        listTodo.insert(0, entity);
-      
-                        await storageService.add(
-                          StorageKeys.kTodoList,
-                          value: entity.toJson(),
-                        );
-                        setState(() {});
+                      onSave: (TodoEntity entity) {
+                        todoProvider.add(entity);
                       },
                     ),
                   ),
@@ -135,20 +63,20 @@ class _MyHomePageState extends State<HomeScreen> {
             IconButton(
               icon: Icon(Icons.refresh),
               onPressed: () async {
-                await load();
+                load();
               },
             ),
-            IconButton(
-              icon: Icon(Icons.settings_sharp),
-              onPressed: () async {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SettingsScreen(),
-                  ),
-                );
-              },
-            ),
+            // IconButton(
+            //   icon: Icon(Icons.settings_sharp),
+            //   onPressed: () async {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (context) => SettingsScreen(),
+            //       ),
+            //     );
+            //   },
+            // ),
             IconButton(
               icon: Icon(Icons.check_box),
               onPressed: () async {
@@ -170,7 +98,9 @@ class _MyHomePageState extends State<HomeScreen> {
               child: TextFormFieldWidget(
                 controller: controllerSearch,
                 hintText: "Search by title",
-                onChanged: (text) => search(text),
+                onChanged: (text) {
+                  todoProvider.search(boxKey, text);
+                },
               ),
             ),
             Expanded(
@@ -209,7 +139,7 @@ class _MyHomePageState extends State<HomeScreen> {
                           endActionPane: ActionPane(
                             motion: const ScrollMotion(),
                             dismissible: DismissiblePane(onDismissed: () {
-                              onDelete(todo);
+                              todoProvider.delete(todo);
                             }),
                             children: [
                               SlidableAction(
@@ -218,7 +148,7 @@ class _MyHomePageState extends State<HomeScreen> {
                                 icon: Icons.delete,
                                 label: 'Delete',
                                 onPressed: (BuildContext context) {
-                                  onDelete(todo);
+                                  todoProvider.delete(todo);
                                 },
                               ),
                             ],
@@ -226,8 +156,12 @@ class _MyHomePageState extends State<HomeScreen> {
                           child: GestureDetector(
                             child: TodoCardWidget(
                               entity: todo,
-                              onDone: (todoEntity) => onDone(todoEntity),
-                              onDelete: () => onDelete(todo),
+                              onDone: (todoEntity) {
+                                todoProvider.onDone(todo);
+                              },
+                              onDelete: () {
+                                todoProvider.delete(todo);
+                              },
                             ),
                             onTap: () {
                               Navigator.push(
@@ -235,11 +169,8 @@ class _MyHomePageState extends State<HomeScreen> {
                                 MaterialPageRoute(
                                   builder: (context) => EditTodoScreen(
                                     onSave: (TodoEntity editedTodo) async {
-                                      await storageService.edit(
-                                        StorageKeys.kTodoList,
-                                        value: editedTodo.toJson(),
-                                      );
-                                      await load();
+                                      todoProvider
+                                          .edit(editedTodo);
                                     },
                                     entity: todo,
                                   ),

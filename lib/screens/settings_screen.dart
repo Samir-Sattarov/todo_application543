@@ -1,9 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-import '../core/utils/theme_helper.dart';
-import '../locator.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -14,11 +10,9 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
 
-  late ThemeHelper themeHelper;
 
   @override
   void initState() {
-    themeHelper = locator();
     super.initState();
   }
 
@@ -31,26 +25,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            ListTile(
-              onTap: () {
-                themeHelper.toggle();
-                themeHelper.load();
-                setState(() {});
-              },
-              title: Text(
-                "Dark",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.sp,
-                ),
-              ),
-              trailing: AbsorbPointer(
-                child: CupertinoSwitch(
-                  value: themeHelper.isDark,
-                  onChanged: (value) {},
-                ),
-              ),
-            )
+            // ListTile(
+            //   onTap: () {
+            //     themeHelper.toggle();
+            //     themeHelper.load();
+            //     setState(() {});
+            //   },
+            //   title: Text(
+            //     "Dark",
+            //     style: TextStyle(
+            //       color: Colors.white,
+            //       fontSize: 16.sp,
+            //     ),
+            //   ),
+            //   trailing: AbsorbPointer(
+            //     child: CupertinoSwitch(
+            //       value: themeHelper.isDark,
+            //       onChanged: (value) {},
+            //     ),
+            //   ),
+            // )
           ],
         ),
       ),
