@@ -35,6 +35,7 @@ class _ApplicationState extends State<Application> {
           return MaterialApp(
             title: 'Flutter Demo',
             theme: ThemeData(
+              scaffoldBackgroundColor: Colors.black45,
               useMaterial3: false,
             ),
             home: HomeScreen(),

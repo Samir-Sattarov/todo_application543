@@ -24,22 +24,26 @@ class HomeScreen extends StatefulWidget {
 
 class _MyHomePageState extends State<HomeScreen> {
   final TextEditingController controllerSearch = TextEditingController();
-  final String boxKey = StorageKeys.kTodoList;
 
   @override
   void initState() {
-    load();
+    initialize();
     super.initState();
   }
 
+  initialize() {
+    context.read<TodoProvider>().boxKey = StorageKeys.kTodoList;
+    load();
+  }
+
   load() {
-    context.read<TodoProvider>().load(boxKey);
+    context.read<TodoProvider>().load();
   }
 
   @override
   Widget build(BuildContext context) {
     final todoProvider = context.read<TodoProvider>();
-    final listTodo  = context.watch<TodoProvider>().listTodo;
+    final listTodo = context.watch<TodoProvider>().listTodo;
     return KeyboardDismissOnTap(
       child: Scaffold(
         appBar: AppBar(
@@ -66,17 +70,6 @@ class _MyHomePageState extends State<HomeScreen> {
                 load();
               },
             ),
-            // IconButton(
-            //   icon: Icon(Icons.settings_sharp),
-            //   onPressed: () async {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(
-            //         builder: (context) => SettingsScreen(),
-            //       ),
-            //     );
-            //   },
-            // ),
             IconButton(
               icon: Icon(Icons.check_box),
               onPressed: () async {
@@ -99,7 +92,7 @@ class _MyHomePageState extends State<HomeScreen> {
                 controller: controllerSearch,
                 hintText: "Search by title",
                 onChanged: (text) {
-                  todoProvider.search(boxKey, text);
+                  todoProvider.search(text);
                 },
               ),
             ),
@@ -157,7 +150,9 @@ class _MyHomePageState extends State<HomeScreen> {
                             child: TodoCardWidget(
                               entity: todo,
                               onDone: (todoEntity) {
-                                todoProvider.onDone(todo);
+                                todoProvider.onDone(todo,
+                                    from: StorageKeys.kTodoList,
+                                    to: StorageKeys.kCompletedTodoList);
                               },
                               onDelete: () {
                                 todoProvider.delete(todo);
@@ -169,8 +164,7 @@ class _MyHomePageState extends State<HomeScreen> {
                                 MaterialPageRoute(
                                   builder: (context) => EditTodoScreen(
                                     onSave: (TodoEntity editedTodo) async {
-                                      todoProvider
-                                          .edit(editedTodo);
+                                      todoProvider.edit(editedTodo);
                                     },
                                     entity: todo,
                                   ),

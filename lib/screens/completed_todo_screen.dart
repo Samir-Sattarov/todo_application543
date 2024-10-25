@@ -1,9 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 import 'package:todo_application/core/entities/todo_results_entity.dart';
+import 'package:todo_application/core/providers/todo_provider.dart';
 import 'package:todo_application/core/utils/app_colors.dart';
 import 'package:todo_application/core/utils/storage_keys.dart';
 import 'package:todo_application/core/utils/storage_service.dart';
@@ -21,55 +22,29 @@ class CompletedTodoScreen extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<CompletedTodoScreen> {
-  late List<TodoEntity> listTodo = [];
-  late StorageService storageService;
-
   @override
   void initState() {
     initialize();
     super.initState();
   }
 
-  initialize() async {
-    storageService = locator();
-
-    await load();
+  initialize() {
+    context.read<TodoProvider>().boxKey = StorageKeys.kCompletedTodoList;
+    load();
   }
 
-  load() async {
-    final response =
-        await storageService.getDataFromBox(StorageKeys.kCompletedTodoList);
-
-    final results = TodoResultsEntity.fromJson(List.from(response));
-
-    listTodo = results.listTodo;
-    setState(() {});
+  load() {
+    context.read<TodoProvider>().load();
   }
 
-  onDelete(TodoEntity entity) async {
-    await storageService.delete(
-      StorageKeys.kCompletedTodoList,
-      entity.id.toString(),
-    );
-    listTodo.remove(entity);
-    setState(() {});
-  }
-
-  onDone(TodoEntity entity) async {
-    await storageService.add(
-      StorageKeys.kTodoList,
-      value: entity.toJson(),
-    );
-    listTodo.removeWhere((element) => element.id == entity.id);
-    await storageService.delete(
-      StorageKeys.kCompletedTodoList,
-      entity.id.toString(),
-    );
-    setState(() {});
+  onDelete(TodoEntity todo) {
+    context.read<TodoProvider>().delete(todo);
   }
 
   @override
   Widget build(BuildContext context) {
+    final todoProvider = context.read<TodoProvider>();
+    final listTodo = context.watch<TodoProvider>().listTodo;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.accentTwo,
@@ -135,7 +110,13 @@ class _MyHomePageState extends State<CompletedTodoScreen> {
                     ),
                     child: TodoCardWidget(
                       entity: todo,
-                      onDone: (todoEntity) => onDone(todoEntity),
+                      onDone: (todoEntity) {
+                        todoProvider.onDone(
+                          todo,
+                          from: StorageKeys.kCompletedTodoList,
+                          to: StorageKeys.kTodoList,
+                        );
+                      },
                       onDelete: () async {
                         onDelete(todo);
                       },
