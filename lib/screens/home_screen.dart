@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:todo_application/core/api/firebase_api_client.dart';
+import 'package:todo_application/core/api/firebase_api_contants.dart';
 import 'package:todo_application/core/providers/todo_provider.dart';
 import 'package:todo_application/core/utils/app_colors.dart';
 import 'package:todo_application/core/utils/assets.dart';
@@ -13,6 +15,7 @@ import 'package:todo_application/widgets/text_form_field_widget.dart';
 import 'package:todo_application/widgets/todo_card_widget.dart';
 
 import '../core/entities/todo_entity.dart';
+import '../locator.dart';
 import 'edit_todo_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -24,6 +27,7 @@ class HomeScreen extends StatefulWidget {
 
 class _MyHomePageState extends State<HomeScreen> {
   final TextEditingController controllerSearch = TextEditingController();
+  late FirebaseApiClient apiClient;
 
   @override
   void initState() {
@@ -31,7 +35,7 @@ class _MyHomePageState extends State<HomeScreen> {
     super.initState();
   }
 
-  initialize() {
+  initialize() async {
     context.read<TodoProvider>().boxKey = StorageKeys.kTodoList;
     load();
   }
@@ -56,7 +60,7 @@ class _MyHomePageState extends State<HomeScreen> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => EditTodoScreen(
-                      onSave: (TodoEntity entity) {
+                      onSave: (TodoEntity entity) async {
                         todoProvider.add(entity);
                       },
                     ),
