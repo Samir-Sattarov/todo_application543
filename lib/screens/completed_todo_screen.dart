@@ -29,12 +29,11 @@ class _MyHomePageState extends State<CompletedTodoScreen> {
   }
 
   initialize() {
-    context.read<TodoProvider>().boxKey = StorageKeys.kCompletedTodoList;
     load();
   }
 
   load() {
-    context.read<TodoProvider>().load();
+    context.read<TodoProvider>().load(isDone: true);
   }
 
   onDelete(TodoEntity todo) {
@@ -113,8 +112,6 @@ class _MyHomePageState extends State<CompletedTodoScreen> {
                       onDone: (todoEntity) {
                         todoProvider.onDone(
                           todo,
-                          from: StorageKeys.kCompletedTodoList,
-                          to: StorageKeys.kTodoList,
                         );
                       },
                       onDelete: () async {

@@ -36,7 +36,7 @@ class _MyHomePageState extends State<HomeScreen> {
   }
 
   initialize() async {
-    context.read<TodoProvider>().boxKey = StorageKeys.kTodoList;
+    context.read<TodoProvider>().collection = FirebaseApiContants.tTodos;
     load();
   }
 
@@ -154,9 +154,7 @@ class _MyHomePageState extends State<HomeScreen> {
                             child: TodoCardWidget(
                               entity: todo,
                               onDone: (todoEntity) {
-                                todoProvider.onDone(todo,
-                                    from: StorageKeys.kTodoList,
-                                    to: StorageKeys.kCompletedTodoList);
+                                todoProvider.onDone(todo);
                               },
                               onDelete: () {
                                 todoProvider.delete(todo);
