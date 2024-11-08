@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -10,6 +11,8 @@ import 'package:todo_application/core/providers/todo_provider.dart';
 import 'package:todo_application/core/utils/app_colors.dart';
 import 'package:todo_application/core/utils/assets.dart';
 import 'package:todo_application/core/utils/storage_keys.dart';
+import 'package:todo_application/core/widgets/success_flush_bar.dart';
+import 'package:todo_application/cubits/todo/delete_todo/delete_todo_cubit.dart';
 import 'package:todo_application/screens/completed_todo_screen.dart';
 import 'package:todo_application/widgets/text_form_field_widget.dart';
 import 'package:todo_application/widgets/todo_card_widget.dart';
@@ -42,6 +45,10 @@ class _MyHomePageState extends State<HomeScreen> {
 
   load() {
     context.read<TodoProvider>().load();
+  }
+
+  _delete(TodoEntity todo) {
+    context.read<DeleteTodoCubit>().delete(todo);
   }
 
   @override
@@ -87,99 +94,108 @@ class _MyHomePageState extends State<HomeScreen> {
             )
           ],
         ),
-        body: SafeArea(
-            child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormFieldWidget(
-                controller: controllerSearch,
-                hintText: "Search by title",
-                onChanged: (text) {
-                  todoProvider.search(text);
-                },
-              ),
-            ),
-            Expanded(
-              child: listTodo.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Добавьте задачу!",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 24.sp,
-                                fontWeight: FontWeight.w800),
-                          ),
-                          SizedBox(
-                            height: 120,
-                            width: 120,
-                            child: Lottie.asset(
-                              Assets.kEmpty,
-                              frameRate: FrameRate(120),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.separated(
-                      itemCount: listTodo.length,
-                      padding: EdgeInsets.all(10.r),
-                      separatorBuilder: (context, index) =>
-                          SizedBox(height: 15.h),
-                      itemBuilder: (context, index) {
-                        final todo = listTodo[index];
-                        return Slidable(
-                          key: const ValueKey(0),
-                          endActionPane: ActionPane(
-                            motion: const ScrollMotion(),
-                            dismissible: DismissiblePane(onDismissed: () {
-                              todoProvider.delete(todo);
-                            }),
+        body: BlocConsumer<DeleteTodoCubit, DeleteTodoState>(
+          listener: (context, state) async {
+            if (state is DeleteTodoSuccess) {
+             SuccessFlushBar("Успешно удалено!! ${state.todo.title}")
+                  .show(context);
+              listTodo.remove(state.todo);
+            }
+          },
+          builder: (context, state) {
+            return SafeArea(
+                child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormFieldWidget(
+                    controller: controllerSearch,
+                    hintText: "Search by title",
+                    onChanged: (text) {
+                      todoProvider.search(text);
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: listTodo.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              SlidableAction(
-                                backgroundColor: Color(0xFFFE4A49),
-                                foregroundColor: Colors.white,
-                                icon: Icons.delete,
-                                label: 'Delete',
-                                onPressed: (BuildContext context) {
-                                  todoProvider.delete(todo);
-                                },
+                              Text(
+                                "Добавьте задачу!",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24.sp,
+                                    fontWeight: FontWeight.w800),
+                              ),
+                              SizedBox(
+                                height: 120,
+                                width: 120,
+                                child: Lottie.asset(
+                                  Assets.kEmpty,
+                                  frameRate: FrameRate(120),
+                                ),
                               ),
                             ],
                           ),
-                          child: GestureDetector(
-                            child: TodoCardWidget(
-                              entity: todo,
-                              onDone: (todoEntity) {
-                                todoProvider.onDone(todo);
-                              },
-                              onDelete: () {
-                                todoProvider.delete(todo);
-                              },
-                            ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditTodoScreen(
-                                    onSave: (TodoEntity editedTodo) async {
-                                      todoProvider.edit(editedTodo);
-                                    },
-                                    entity: todo,
+                        )
+                      : ListView.separated(
+                          itemCount: listTodo.length,
+                          padding: EdgeInsets.all(10.r),
+                          separatorBuilder: (context, index) =>
+                              SizedBox(height: 15.h),
+                          itemBuilder: (context, index) {
+                            final todo = listTodo[index];
+                            return Slidable(
+                              key: const ValueKey(0),
+                              endActionPane: ActionPane(
+                                motion: const ScrollMotion(),
+                                dismissible: DismissiblePane(
+                                    onDismissed: () => _delete(todo)),
+                                children: [
+                                  SlidableAction(
+                                    backgroundColor: Color(0xFFFE4A49),
+                                    foregroundColor: Colors.white,
+                                    icon: Icons.delete,
+                                    label: 'Delete',
+                                    onPressed: (BuildContext context) =>
+                                        _delete(todo),
                                   ),
+                                ],
+                              ),
+                              child: GestureDetector(
+                                child: TodoCardWidget(
+                                  entity: todo,
+                                  onDone: (todoEntity) {
+                                    todoProvider.onDone(todo);
+                                  },
+                                  onDelete: () {
+                                    _delete(todo);
+                                  },
                                 ),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        )),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => EditTodoScreen(
+                                        onSave: (TodoEntity editedTodo) async {
+                                          todoProvider.edit(editedTodo);
+                                        },
+                                        entity: todo,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ));
+          },
+        ),
       ),
     );
   }
