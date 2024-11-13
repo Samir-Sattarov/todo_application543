@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -12,7 +13,10 @@ import 'package:todo_application/core/utils/app_colors.dart';
 import 'package:todo_application/core/utils/assets.dart';
 import 'package:todo_application/core/utils/storage_keys.dart';
 import 'package:todo_application/core/widgets/success_flush_bar.dart';
+import 'package:todo_application/cubits/todo/add_todo/add_todo_cubit.dart';
 import 'package:todo_application/cubits/todo/delete_todo/delete_todo_cubit.dart';
+import 'package:todo_application/cubits/todo/edit_todo/edit_todo_cubit.dart';
+import 'package:todo_application/cubits/todo/load_todo/load_todo_cubit.dart';
 import 'package:todo_application/screens/completed_todo_screen.dart';
 import 'package:todo_application/widgets/text_form_field_widget.dart';
 import 'package:todo_application/widgets/todo_card_widget.dart';
@@ -32,19 +36,16 @@ class _MyHomePageState extends State<HomeScreen> {
   final TextEditingController controllerSearch = TextEditingController();
   late FirebaseApiClient apiClient;
 
+  List<TodoEntity> listTodo = [];
+
   @override
   void initState() {
-    initialize();
+    load();
     super.initState();
   }
 
-  initialize() async {
-    context.read<TodoProvider>().collection = FirebaseApiContants.tTodos;
-    load();
-  }
-
   load() {
-    context.read<TodoProvider>().load();
+    context.read<LoadTodoCubit>().load();
   }
 
   _delete(TodoEntity todo) {
@@ -53,8 +54,6 @@ class _MyHomePageState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final todoProvider = context.read<TodoProvider>();
-    final listTodo = context.watch<TodoProvider>().listTodo;
     return KeyboardDismissOnTap(
       child: Scaffold(
         appBar: AppBar(
@@ -68,7 +67,7 @@ class _MyHomePageState extends State<HomeScreen> {
                   MaterialPageRoute(
                     builder: (context) => EditTodoScreen(
                       onSave: (TodoEntity entity) async {
-                        todoProvider.add(entity);
+                        BlocProvider.of<AddTodoCubit>(context).add(entity);
                       },
                     ),
                   ),
@@ -77,9 +76,7 @@ class _MyHomePageState extends State<HomeScreen> {
             ),
             IconButton(
               icon: Icon(Icons.refresh),
-              onPressed: () async {
-                load();
-              },
+              onPressed: load,
             ),
             IconButton(
               icon: Icon(Icons.check_box),
@@ -94,17 +91,80 @@ class _MyHomePageState extends State<HomeScreen> {
             )
           ],
         ),
-        body: BlocConsumer<DeleteTodoCubit, DeleteTodoState>(
-          listener: (context, state) async {
-            if (state is DeleteTodoSuccess) {
-             SuccessFlushBar("Успешно удалено!! ${state.todo.title}")
-                  .show(context);
-              listTodo.remove(state.todo);
-            }
-          },
-          builder: (context, state) {
-            return SafeArea(
-                child: Column(
+        body: MultiBlocListener(
+          listeners: [
+            BlocListener<AddTodoCubit, AddTodoState>(
+              listener: (context, state) {
+                if (state is AddTodoError) {
+                  print('Error ${state.message}');
+                }
+
+                if (state is AddTodoSuccess) {
+                  SuccessFlushBar("Успешно добавленно!!!! ${state.todo.title}")
+                      .show(context);
+                  listTodo.add(state.todo);
+
+                  if (mounted) {
+                    Future.delayed(
+                      Duration.zero,
+                      () {
+                        setState(() {});
+                      },
+                    );
+                  }
+                }
+              },
+            ),
+            BlocListener<DeleteTodoCubit, DeleteTodoState>(
+              listener: (context, state) async {
+                if (state is DeleteTodoError) {
+                  print("Error delete todo ${state.message}");
+                }
+
+                if (state is DeleteTodoSuccess) {
+                  SuccessFlushBar("Успешно удалено!! ${state.todo.title}")
+                      .show(context);
+                  listTodo.remove(state.todo);
+                  if (mounted) {
+                    Future.delayed(
+                      Duration.zero,
+                      () {
+                        setState(() {});
+                      },
+                    );
+                  }
+                }
+              },
+            ),
+            BlocListener<EditTodoCubit, EditTodoState>(
+              listener: (context, state) {
+                if (state is EditTodoError) {
+                  print('Error ${state.message}');
+                }
+
+                if (state is EditTodoSuccess) {
+                  final todo = state.todo;
+                  SuccessFlushBar("Успешно измененно!!!! ${todo.title}")
+                      .show(context);
+                  final index =
+                      listTodo.indexWhere((element) => element.id == todo.id);
+                  if (index != -1) {
+                    listTodo[index] = todo;
+                    if (mounted) {
+                      Future.delayed(
+                        Duration.zero,
+                        () {
+                          setState(() {});
+                        },
+                      );
+                    }
+                  }
+                }
+              },
+            ),
+          ],
+          child: SafeArea(
+            child: Column(
               children: [
                 Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -112,89 +172,117 @@ class _MyHomePageState extends State<HomeScreen> {
                     controller: controllerSearch,
                     hintText: "Search by title",
                     onChanged: (text) {
-                      todoProvider.search(text);
+                      context.read<LoadTodoCubit>().search(query: text);
                     },
                   ),
                 ),
                 Expanded(
-                  child: listTodo.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Добавьте задачу!",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24.sp,
-                                    fontWeight: FontWeight.w800),
-                              ),
-                              SizedBox(
-                                height: 120,
-                                width: 120,
-                                child: Lottie.asset(
-                                  Assets.kEmpty,
-                                  frameRate: FrameRate(120),
-                                ),
-                              ),
-                            ],
+                  child: BlocConsumer<LoadTodoCubit, LoadTodoState>(
+                    listener: (context, state) async {
+                      if (state is LoadTodoError) {
+                        print("Load todo error ${state.message}");
+                      }
+                  
+                      if (state is LoadTodoLoaded) {
+                        listTodo = state.listTodo;
+                      }
+                    },
+                    builder: (context, state) {
+                      if (state is LoadTodoLoading) {
+                        return Center(
+                          child: CupertinoActivityIndicator(
+                            color: Colors.white,
                           ),
-                        )
-                      : ListView.separated(
-                          itemCount: listTodo.length,
-                          padding: EdgeInsets.all(10.r),
-                          separatorBuilder: (context, index) =>
-                              SizedBox(height: 15.h),
-                          itemBuilder: (context, index) {
-                            final todo = listTodo[index];
-                            return Slidable(
-                              key: const ValueKey(0),
-                              endActionPane: ActionPane(
-                                motion: const ScrollMotion(),
-                                dismissible: DismissiblePane(
-                                    onDismissed: () => _delete(todo)),
+                        );
+                      }
+                      return listTodo.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  SlidableAction(
-                                    backgroundColor: Color(0xFFFE4A49),
-                                    foregroundColor: Colors.white,
-                                    icon: Icons.delete,
-                                    label: 'Delete',
-                                    onPressed: (BuildContext context) =>
-                                        _delete(todo),
+                                  Text(
+                                    "Добавьте задачу!",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 24.sp,
+                                        fontWeight: FontWeight.w800),
+                                  ),
+                                  SizedBox(
+                                    height: 120,
+                                    width: 120,
+                                    child: Lottie.asset(
+                                      Assets.kEmpty,
+                                      frameRate: FrameRate(120),
+                                    ),
                                   ),
                                 ],
                               ),
-                              child: GestureDetector(
-                                child: TodoCardWidget(
-                                  entity: todo,
-                                  onDone: (todoEntity) {
-                                    todoProvider.onDone(todo);
-                                  },
-                                  onDelete: () {
-                                    _delete(todo);
-                                  },
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => EditTodoScreen(
-                                        onSave: (TodoEntity editedTodo) async {
-                                          todoProvider.edit(editedTodo);
-                                        },
-                                        entity: todo,
+                            )
+                          : ListView.separated(
+                              itemCount: listTodo.length,
+                              padding: EdgeInsets.all(10.r),
+                              separatorBuilder: (context, index) =>
+                                  SizedBox(height: 15.h),
+                              itemBuilder: (context, index) {
+                                final todo = listTodo[index];
+                                return Slidable(
+                                  key: const ValueKey(0),
+                                  endActionPane: ActionPane(
+                                    motion: const ScrollMotion(),
+                                    dismissible: DismissiblePane(
+                                        onDismissed: () => _delete(todo)),
+                                    children: [
+                                      SlidableAction(
+                                        backgroundColor: Color(0xFFFE4A49),
+                                        foregroundColor: Colors.white,
+                                        icon: Icons.delete,
+                                        label: 'Delete',
+                                        onPressed: (BuildContext context) =>
+                                            _delete(todo),
                                       ),
+                                    ],
+                                  ),
+                                  child: GestureDetector(
+                                    child: TodoCardWidget(
+                                      entity: todo,
+                                      onDone: (todoEntity) {
+                                        print(
+                                            "todo on done state ${todoEntity.isDone}");
+                                        BlocProvider.of<EditTodoCubit>(context)
+                                            .edit(todoEntity);
+                                        listTodo.remove(todo);
+                                        setState(() {});
+                                      },
+                                      onDelete: () {
+                                        _delete(todo);
+                                      },
                                     ),
-                                  );
-                                },
-                              ),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => EditTodoScreen(
+                                            onSave:
+                                                (TodoEntity editedTodo) async {
+                                              context
+                                                  .read<EditTodoCubit>()
+                                                  .edit(editedTodo);
+                                            },
+                                            entity: todo,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
                             );
-                          },
-                        ),
+                    },
+                  ),
                 ),
               ],
-            ));
-          },
+            ),
+          ),
         ),
       ),
     );
